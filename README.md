@@ -34,6 +34,10 @@ A high-performance Discord music bot developed by **@Downloads\AsTRRoMC.zip**. T
 
 ## 🚀 Deployment
 
+[![Deploy to Heroku](https://www.herokucdn.com/deploy/button.svg)](https://www.heroku.com/deploy/?template=https://github.com/DevAstrro/musicbot)
+[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new/template?template=https://github.com/DevAstrro/musicbot)
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/DevAstrro/musicbot)
+
 ### 1. Heroku
 - Add the **Python** buildpack.
 - Add the **FFmpeg** buildpack: `https://github.com/jonathanong/heroku-buildpack-ffmpeg-latest.git`

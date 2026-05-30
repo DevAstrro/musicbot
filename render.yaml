@@ -1,0 +1,9 @@
+services:
+  - type: worker
+    name: musicbot
+    env: docker
+    dockerContext: .
+    dockerfilePath: Dockerfile
+    envVars:
+      - key: DISCORD_TOKEN
+        sync: false
