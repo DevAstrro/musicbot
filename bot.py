@@ -7,6 +7,7 @@ import datetime
 import random
 import re
 import aiohttp
+from aiohttp import web
 from discord.ext import commands
 from discord import app_commands
 from typing import List, Optional, Union
@@ -16,6 +17,19 @@ from functools import lru_cache
 load_dotenv()
 
 TOKEN = os.getenv('DISCORD_TOKEN')
+
+async def health_check(request):
+    return web.Response(text="Bot is running!")
+
+async def start_web_server():
+    app = web.Application()
+    app.router.add_get("/", health_check)
+    runner = web.AppRunner(app)
+    await runner.setup()
+    port = int(os.getenv("PORT", 8080))
+    site = web.TCPSite(runner, "0.0.0.0", port)
+    await site.start()
+    print(f"Health check server started on port {port}")
 
 ytdl_format_options = {
     'format': 'bestaudio/best',
@@ -688,6 +702,7 @@ class MyBot(commands.Bot):
 
     async def setup_hook(self):
         await self.add_cog(Music(self))
+        self.loop.create_task(start_web_server())
 
     async def on_ready(self):
         print(f'Logged in as {self.user}')
