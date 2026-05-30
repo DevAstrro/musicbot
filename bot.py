@@ -58,6 +58,10 @@ ytdl_format_options = {
     'extractor_args': {'youtube': ['player_client=android']},
 }
 
+if os.path.exists('cookies.txt'):
+    ytdl_format_options['cookiefile'] = 'cookies.txt'
+    print("[YTDL] Found cookies.txt - Using for authentication")
+
 ffmpeg_options = {
     'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 -probesize 100M -analyzeduration 100M',
     'options': '-vn -b:a 192k -af "volume=1.0" -preset veryfast -thread_queue_size 2048 -movflags faststart',
