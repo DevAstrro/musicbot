@@ -15,7 +15,6 @@ from functools import lru_cache
 
 load_dotenv()
 
-# --- Configuration ---
 TOKEN = os.getenv('DISCORD_TOKEN')
 
 ytdl_format_options = {
@@ -32,7 +31,6 @@ ytdl_format_options = {
     'source_address': '0.0.0.0',
     'extract_flat': 'in_playlist',
     'skip_download': True,
-    # --- Advanced Anti-Ad & Stability ---
     'noprogress': True,
     'cachedir': False,
     'youtube_include_dash_manifest': False,
@@ -43,8 +41,7 @@ ytdl_format_options = {
     'geo_bypass': True,
     'socket_timeout': 30,
     'retries': 10,
-    # --- Advanced Anti-Ad Measures ---
-    'extractor_args': {'youtube': ['player_client=android']}, # Masquerade as mobile client
+    'extractor_args': {'youtube': ['player_client=android']},
 }
 
 ffmpeg_options = {
@@ -52,7 +49,6 @@ ffmpeg_options = {
     'options': '-vn -b:a 192k -af "volume=1.0" -preset veryfast -thread_queue_size 2048 -movflags faststart',
 }
 
-# Define Audio Filters
 AUDIO_FILTERS = {
     "NONE": "",
     "BASSBOOST": "bass=g=15,equalizer=f=40:width_type=h:width=50:g=10",
@@ -113,7 +109,6 @@ class YTDLSource(discord.PCMVolumeTransformer):
     async def from_url(cls, url, *, loop=None, stream=False, requester=None, filter_name="NONE"):
         loop = loop or asyncio.get_event_loop()
         
-        # Use a fresh YTDL instance without flat extraction to get the real stream URL
         payload_ytdl = yt_dlp.YoutubeDL({**ytdl_format_options, 'extract_flat': False})
         
         try:
@@ -132,7 +127,6 @@ class YTDLSource(discord.PCMVolumeTransformer):
             print(f"[YTDL] Critical: No stream URL found for {data.get('title')}")
             raise Exception("No valid stream URL found.")
             
-        # Apply filters via dynamic FFmpeg options
         options = get_ffmpeg_options(filter_name)
         return cls(discord.FFmpegPCMAudio(filename, before_options=ffmpeg_options['before_options'], options=options), data=data)
 
@@ -239,14 +233,12 @@ class MusicPlayer:
 
             if not self.loop or not self.current:
                 try:
-                    # Wait for 5 minutes (300s) for a new song
                     async with asyncio.timeout(300):
                         while not self.queue:
                             await asyncio.sleep(1)
                         url, requester = self.queue.pop(0)
                         source = await YTDLSource.from_url(url, loop=self.bot.loop, stream=True, requester=requester, filter_name=self.filter)
                 except (asyncio.TimeoutError, asyncio.CancelledError):
-                    # If 24/7 is on, don't destroy, just wait again
                     if self.mode_247:
                         continue
                     return self.destroy(self._guild)
@@ -353,7 +345,6 @@ class Music(commands.Cog):
                 return await interaction.followup.send(f"I couldn't join the voice channel: {e}")
 
         try:
-            # First, check if it's a direct playlist link
             if 'list=' in search:
                 data = await self.bot.loop.run_in_executor(None, lambda: ytdl.extract_info(search, download=False, process=False))
                 if 'entries' in data:
@@ -363,11 +354,9 @@ class Music(commands.Cog):
                         if url: player.queue.append((url, interaction.user))
                     return await interaction.followup.send(f"Added {len(entries)} tracks to the queue.")
 
-            # If not a direct link, search for it
             data = await self.bot.loop.run_in_executor(None, lambda: ytdl.extract_info(search, download=False))
             
             if 'entries' in data: 
-                # Check if it's a search result list or a playlist from search
                 if data.get('_type') == 'playlist':
                     entries = list(data['entries'])
                     for entry in entries:
@@ -392,7 +381,6 @@ class Music(commands.Cog):
         if not current or len(current) < 3: return []
         
         try:
-            # Set a very tight timeout (2 seconds) to leave room for the response
             async with asyncio.timeout(2.0):
                 data = await self.bot.loop.run_in_executor(None, get_search_results, current)
                 if not data or 'entries' not in data: return []
@@ -405,7 +393,6 @@ class Music(commands.Cog):
                     if url:
                         choices.append(app_commands.Choice(name=title, value=url))
                 
-                # Check if interaction is still valid before sending
                 if not interaction.response.is_done():
                     return choices[:5]
                 return []
@@ -419,7 +406,7 @@ class Music(commands.Cog):
             description="Minimalist developer build protocol.",
             color=discord.Color.from_rgb(43, 45, 49)
         )
-        embed.add_field(name="Commands", value="`/play` · `/pause` · `/resume` · `/247` · `/filter` · `/jump` · `/move` · `/remove` · `/shuffle` · `/clear` · `/queue` · `/history` · `/volume` · `/skip` · `/stop` · `/lockchannel` · `/lockserver`", inline=False)
+        embed.add_field(name="Commands", value="`/play` · `/pause` · `/resume` · `/247` · `/filter` · `/jump` · `/move` · `/remove` · `/shuffle` · `/clear` · `/queue` · `/history` · `/volume` · `/skip` · `/stop` · `/lockchannel` · `/lockserver` · `/ping`", inline=False)
         embed.add_field(name="System Modes", value="24/7 Persistent Handshake · System Reload · Queue Purge", inline=False)
         embed.add_field(name="Signal Processing", value="Apply DSP filters: Bassboost, Nightcore, Vaporwave, Chipmunk", inline=False)
         embed.add_field(name="Interface Guide", value="Use the control panel for real-time adjustments.", inline=False)
@@ -598,7 +585,6 @@ class Music(commands.Cog):
     async def reload(self, interaction: discord.Interaction):
         await interaction.response.send_message("Restarting the system... The bot will be back online in a few seconds.", ephemeral=True)
         
-        # Give Discord time to receive the message before we kill the process
         await asyncio.sleep(2)
         
         for guild_id in list(self.players.keys()):
@@ -655,10 +641,8 @@ class Music(commands.Cog):
             player.locked_channel_id = interaction.channel_id
             await interaction.response.send_message(f"The bot has been locked to {interaction.channel.mention}.")
 
-    # --- Prefix Command Fallbacks ---
     @commands.command(name='lockchannel')
     async def lockchannel_prefix(self, ctx):
-        """Prefix version of lockchannel."""
         if not await self.bot.is_owner(ctx.author): return
         player = self.get_player(ctx)
         if player.locked_channel_id == ctx.channel.id:
@@ -670,7 +654,6 @@ class Music(commands.Cog):
 
     @commands.command(name='lockserver')
     async def lockserver_prefix(self, ctx):
-        """Prefix version of lockserver."""
         if not await self.bot.is_owner(ctx.author): return
         if self.locked_guild_id == ctx.guild.id:
             self.locked_guild_id = None
@@ -682,7 +665,6 @@ class Music(commands.Cog):
     @commands.command(name='reload')
     @commands.has_permissions(administrator=True)
     async def reload_prefix(self, ctx):
-        """Prefix version of reload."""
         await ctx.send("Restarting the system...")
         await asyncio.sleep(2)
         for guild_id in list(self.players.keys()):
@@ -694,7 +676,6 @@ class Music(commands.Cog):
     async def on_voice_state_update(self, member, before, after):
         if member.id == self.bot.user.id: return
         if before.channel and not after.channel:
-            # Check if bot is alone in channel
             vc = member.guild.voice_client
             if vc and len(before.channel.members) == 1:
                 await self.cleanup(member.guild)
@@ -718,7 +699,6 @@ class MyBot(commands.Bot):
 
     async def on_command_error(self, ctx, error):
         if isinstance(error, commands.CommandNotFound):
-            # Only suggest if it looks like they were trying to use a music command
             cmd = ctx.invoked_with.lower()
             music_cmds = ['play', 'pause', 'resume', 'skip', 'stop', 'queue', 'history', 'volume', 'filter', 'clear', 'shuffle', 'loop', 'jump', 'move', 'remove']
             if cmd in music_cmds:
@@ -730,7 +710,6 @@ bot = MyBot()
 
 @bot.command()
 async def sync(ctx):
-    """Emergency manual synchronization (Owner Only)."""
     if not await bot.is_owner(ctx.author):
         return
     
