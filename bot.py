@@ -713,13 +713,12 @@ async def sync(ctx):
     if not await bot.is_owner(ctx.author):
         return
     
-    msg = await ctx.send("Forcing system synchronization...")
+    msg = await ctx.send("Syncing commands... Please wait.")
     try:
-        synced = await bot.tree.sync()
-        for guild in bot.guilds:
-            bot.tree.copy_global_to(guild=guild)
-            await bot.tree.sync(guild=guild)
-        await msg.edit(content=f"System synchronized: {len(synced)} commands updated.")
+        await bot.tree.sync()
+        bot.tree.copy_global_to(guild=ctx.guild)
+        await bot.tree.sync(guild=ctx.guild)
+        await msg.edit(content=f"System synchronized! Global commands updated and synced to this server.")
     except Exception as e:
         await msg.edit(content=f"Synchronization error: {e}")
 
