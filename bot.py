@@ -83,14 +83,14 @@ class MusicControlView(discord.ui.View):
         self.player = player
 
     @discord.ui.button(label="VOL-", style=discord.ButtonStyle.secondary)
-    async def vol_down(self, interaction, button):
+    async def vol_down(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.player.volume = max(0.0, self.player.volume - 0.1)
         if interaction.guild.voice_client and interaction.guild.voice_client.source:
             interaction.guild.voice_client.source.volume = self.player.volume
         await interaction.response.edit_message(embed=self.player.create_np_embed())
 
     @discord.ui.button(label="II", style=discord.ButtonStyle.primary)
-    async def play_pause(self, interaction, button):
+    async def play_pause(self, interaction: discord.Interaction, button: discord.ui.Button):
         vc = interaction.guild.voice_client
         if not vc: return
         if vc.is_playing():
@@ -104,37 +104,37 @@ class MusicControlView(discord.ui.View):
         await interaction.response.edit_message(view=self)
 
     @discord.ui.button(label=">>", style=discord.ButtonStyle.secondary)
-    async def skip(self, interaction, button):
+    async def skip(self, interaction: discord.Interaction, button: discord.ui.Button):
         vc = interaction.guild.voice_client
         if vc: vc.stop()
         await interaction.response.send_message("Skipped track.", ephemeral=True)
 
     @discord.ui.button(label="VOL+", style=discord.ButtonStyle.secondary)
-    async def vol_up(self, interaction, button):
+    async def vol_up(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.player.volume = min(1.0, self.player.volume + 0.1)
         if interaction.guild.voice_client and interaction.guild.voice_client.source:
             interaction.guild.voice_client.source.volume = self.player.volume
         await interaction.response.edit_message(embed=self.player.create_np_embed())
 
     @discord.ui.button(label="LOOP", style=discord.ButtonStyle.secondary, row=1)
-    async def loop(self, interaction, button):
+    async def loop(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.player.loop = not self.player.loop
         button.style = discord.ButtonStyle.success if self.player.loop else discord.ButtonStyle.secondary
         await interaction.response.edit_message(view=self)
 
     @discord.ui.button(label="SHUFFLE", style=discord.ButtonStyle.secondary, row=1)
-    async def shuffle(self, interaction, button):
+    async def shuffle(self, interaction: discord.Interaction, button: discord.ui.Button):
         if len(self.player.queue) < 2: return await interaction.response.send_message("Queue too short.", ephemeral=True)
         random.shuffle(self.player.queue)
         await interaction.response.send_message("Queue shuffled.", ephemeral=True)
 
     @discord.ui.button(label="STOP", style=discord.ButtonStyle.danger, row=1)
-    async def stop_button(self, interaction, button):
+    async def stop_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         await self.player._cog.cleanup(interaction.guild)
         await interaction.response.send_message("Stopped.", ephemeral=True)
 
 class MusicPlayer:
-    def __init__(self, ctx):
+    def __init__(self, ctx: Union[discord.Interaction, commands.Context]):
         self.bot = ctx.client if isinstance(ctx, discord.Interaction) else ctx.bot
         self._guild = ctx.guild
         self._channel = ctx.channel
@@ -210,12 +210,12 @@ class MusicPlayer:
         return self.bot.loop.create_task(self._cog.cleanup(guild))
 
 class Music(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.players = {}
         self.locked_guild_id = None
 
-    async def cleanup(self, guild):
+    async def cleanup(self, guild: discord.Guild):
         try: await guild.voice_client.disconnect()
         except: pass
         player = self.players.get(guild.id)
@@ -226,12 +226,12 @@ class Music(commands.Cog):
                 except: pass
             del self.players[guild.id]
 
-    def get_player(self, ctx):
+    def get_player(self, ctx: Union[discord.Interaction, commands.Context]):
         guild_id = ctx.guild.id if isinstance(ctx, commands.Context) else ctx.guild_id
         if guild_id not in self.players: self.players[guild_id] = MusicPlayer(ctx)
         return self.players[guild_id]
 
-    async def interaction_check(self, interaction) -> bool:
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if self.locked_guild_id and self.locked_guild_id != interaction.guild_id:
             await interaction.response.send_message("Bot is locked to another server.", ephemeral=True)
             return False
@@ -239,7 +239,7 @@ class Music(commands.Cog):
 
     @app_commands.command(name='play', description='Play a song from YouTube or a URL')
     @app_commands.describe(search='Song name or YouTube URL')
-    async def play(self, interaction, search):
+    async def play(self, interaction: discord.Interaction, search: str):
         if not interaction.user.voice: return await interaction.response.send_message("Join a voice channel first!", ephemeral=True)
         player = self.get_player(interaction)
         if player.locked_channel_id and player.locked_channel_id != interaction.channel_id:
@@ -264,7 +264,7 @@ class Music(commands.Cog):
         except Exception as e: await interaction.followup.send(f"Error: {e}")
 
     @play.autocomplete('search')
-    async def play_autocomplete(self, interaction, current) -> List[app_commands.Choice[str]]:
+    async def play_autocomplete(self, interaction: discord.Interaction, current: str) -> List[app_commands.Choice[str]]:
         if not current or len(current) < 3: return []
         try:
             async with asyncio.timeout(2.0):
@@ -278,33 +278,33 @@ class Music(commands.Cog):
         except: return []
 
     @app_commands.command(name='help', description='Show available commands')
-    async def help(self, interaction):
+    async def help(self, interaction: discord.Interaction):
         embed = discord.Embed(title="Music Bot Commands", color=discord.Color.from_rgb(43, 45, 49))
         embed.add_field(name="Commands", value="`/play`, `/pause`, `/resume`, `/skip`, `/stop`, `/queue`, `/history`, `/volume`, `/247`, `/loop`, `/shuffle`, `/ping`, `/lockserver`, `/lockchannel`, `/reload`", inline=False)
         await interaction.response.send_message(embed=embed)
 
     @app_commands.command(name='pause', description='Pause music')
-    async def pause(self, interaction):
+    async def pause(self, interaction: discord.Interaction):
         if interaction.guild.voice_client: interaction.guild.voice_client.pause()
         await interaction.response.send_message("Paused.")
 
     @app_commands.command(name='resume', description='Resume music')
-    async def resume(self, interaction):
+    async def resume(self, interaction: discord.Interaction):
         if interaction.guild.voice_client: interaction.guild.voice_client.resume()
         await interaction.response.send_message("Resumed.")
 
     @app_commands.command(name='skip', description='Skip song')
-    async def skip(self, interaction):
+    async def skip(self, interaction: discord.Interaction):
         if interaction.guild.voice_client: interaction.guild.voice_client.stop()
         await interaction.response.send_message("Skipped.")
 
     @app_commands.command(name='stop', description='Stop and leave')
-    async def stop(self, interaction):
+    async def stop(self, interaction: discord.Interaction):
         await self.cleanup(interaction.guild)
         await interaction.response.send_message("Disconnected.")
 
     @app_commands.command(name='queue', description='Show queue')
-    async def queue(self, interaction):
+    async def queue(self, interaction: discord.Interaction):
         p = self.get_player(interaction)
         if not p.queue and not p.current: return await interaction.response.send_message("Queue is empty.", ephemeral=True)
         fmt = f"**Playing**: {p.current['title'] if p.current else 'None'}\n\n"
@@ -312,32 +312,34 @@ class Music(commands.Cog):
         await interaction.response.send_message(embed=discord.Embed(title="Queue", description=fmt, color=discord.Color.from_rgb(43, 45, 49)))
 
     @app_commands.command(name='ping', description='Check latency')
-    async def ping(self, interaction):
+    async def ping(self, interaction: discord.Interaction):
         await interaction.response.send_message(f"Latency: {round(self.bot.latency * 1000)}ms", ephemeral=True)
 
     @app_commands.command(name='reload', description='Restart bot')
     @app_commands.checks.has_permissions(administrator=True)
-    async def reload(self, interaction):
+    async def reload(self, interaction: discord.Interaction):
         await interaction.response.send_message("Restarting...", ephemeral=True)
         await asyncio.sleep(2)
+        for guild_id in list(self.players.keys()):
+            await self.cleanup(self.bot.get_guild(guild_id))
         import sys
         os.execv(sys.executable, ['python'] + sys.argv)
 
     @app_commands.command(name='lockserver', description='Lock to server')
-    async def lockserver(self, interaction):
+    async def lockserver(self, interaction: discord.Interaction):
         if not await self.bot.is_owner(interaction.user): return
         self.locked_guild_id = None if self.locked_guild_id else interaction.guild_id
         await interaction.response.send_message(f"Server lock: {'Enabled' if self.locked_guild_id else 'Disabled'}")
 
     @app_commands.command(name='lockchannel', description='Lock to channel')
-    async def lockchannel(self, interaction):
+    async def lockchannel(self, interaction: discord.Interaction):
         if not await self.bot.is_owner(interaction.user): return
         p = self.get_player(interaction)
         p.locked_channel_id = None if p.locked_channel_id else interaction.channel_id
         await interaction.response.send_message(f"Channel lock: {'Enabled' if p.locked_channel_id else 'Disabled'}")
 
     @commands.command(name='sync')
-    async def sync_prefix(self, ctx):
+    async def sync_prefix(self, ctx: commands.Context):
         if not await self.bot.is_owner(ctx.author): return
         await self.bot.tree.sync()
         self.bot.tree.copy_global_to(guild=ctx.guild)
