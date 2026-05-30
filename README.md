@@ -32,6 +32,24 @@ A high-performance Discord music bot developed by **@Downloads\AsTRRoMC.zip**. T
    python bot.py
    ```
 
+## 🚀 Deployment
+
+### 1. Heroku
+- Add the **Python** buildpack.
+- Add the **FFmpeg** buildpack: `https://github.com/jonathanong/heroku-buildpack-ffmpeg-latest.git`
+- Set your `DISCORD_TOKEN` in the Config Vars.
+
+### 2. Railway
+- Connect your GitHub repo.
+- Railway will automatically detect the `Dockerfile` and deploy it with all dependencies (including FFmpeg).
+- Set your `DISCORD_TOKEN` in the Variables tab.
+
+### 3. Render
+- Create a new **Web Service** or **Background Worker**.
+- Connect your GitHub repo.
+- Render will use the `Dockerfile` automatically.
+- Set your `DISCORD_TOKEN` in the Environment Variables.
+
 ## 🎮 Commands
 
 ### Music Controls
