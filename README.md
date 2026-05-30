@@ -78,5 +78,18 @@ A high-performance Discord music bot developed by **@astrromc (discord)**. This 
 ## 🔄 Synchronization
 If slash commands do not appear immediately, use the `!sync` text command (Owner only) to force a global update.
 
+## 🛠️ Troubleshooting (YouTube "Sign in" Error)
+
+If you see an error like "Sign in to prove you're not a bot", follow these steps to secure your bot:
+
+1. **Install Browser Extension**: Install [Get cookies.txt LOCALLY](https://chrome.google.com/webstore/detail/get-cookiestxt-locally/ccmclabjmapocbbgdhnkonpjjhakyclj) (Chrome/Edge).
+2. **Export Cookies**: Go to YouTube, log in, click the extension, and click **Export**.
+3. **Copy Content**: Open the downloaded `cookies.txt` and copy **all the text** inside.
+4. **Add to Hosting**: 
+   - Go to your hosting platform (Render/Railway/Heroku).
+   - Create a new **Environment Variable** named **`YT_COOKIES`**.
+   - Paste the copied text as the value and save.
+5. **Re-deploy**: Clear build cache and deploy. The bot will now use these cookies securely without exposing them on GitHub.
+
 ## 📜 License
 This project is licensed under the MIT License.
