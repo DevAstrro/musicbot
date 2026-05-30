@@ -17,6 +17,12 @@ from functools import lru_cache
 load_dotenv()
 
 TOKEN = os.getenv('DISCORD_TOKEN')
+YT_COOKIES = os.getenv('YT_COOKIES')
+
+if YT_COOKIES:
+    with open('cookies.txt', 'w') as f:
+        f.write(YT_COOKIES)
+    print("[YTDL] Created cookies.txt from environment variable")
 
 async def health_check(request):
     return web.Response(text="Bot is running!")
