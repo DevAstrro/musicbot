@@ -334,7 +334,7 @@ class Music(commands.Cog):
         return True
 
     @app_commands.command(name='play', description='Play a song from YouTube or a URL')
-    @app_commands.describe(search='[ SONG NAME / URL ]')
+    @app_commands.describe(search='Song name or YouTube URL')
     async def play(self, interaction: discord.Interaction, search: str):
         if not interaction.user.voice:
             return await interaction.response.send_message("You need to be in a voice channel to play music.", ephemeral=True)
