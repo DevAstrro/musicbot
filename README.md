@@ -1,6 +1,6 @@
 # Discord Music Bot (Slash Command Edition)
 
-A high-performance Discord music bot developed by **@Downloads\AsTRRoMC.zip**. This bot features native Slash Commands, YouTube search Autocomplete, and a natural, human-readable interface.
+A high-performance Discord music bot developed by **@astrromc (discord)**. This bot features native Slash Commands, YouTube search Autocomplete, and a natural, human-readable interface.
 
 ## 🚀 Key Features
 - **Native Slash Commands**: Intuitive `/` command menu integration.
